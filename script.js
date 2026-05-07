@@ -1,93 +1,97 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // We use rss2json to convert public RSS feeds into JSON. 
-    // This allows the website to work perfectly on GitHub Pages without needing a backend server!
-    const RSS2JSON_URL = 'https://api.rss2json.com/v1/api.json?rss_url=';
+    // Using the newly cloned BBC News API running locally
+    const API_BASE_URL = 'http://localhost:3000/api';
     const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
 
-    // Sections Configuration (Reliable RSS Feeds)
+    // Sections Configuration (BBC Bengali API)
     const sections = [
         {
             id: 'politics',
-            url: `${RSS2JSON_URL}${encodeURIComponent('https://feeds.bbci.co.uk/bengali/rss.xml')}`,
+            url: `${API_BASE_URL}/categories/politics`,
             containerId: 'politics-grid',
             loaderId: 'politics-loader',
-            sourceName: 'BBC Bangla'
+            sourceName: 'BBC Bangla - Politics'
         },
         {
             id: 'bd',
-            url: `${RSS2JSON_URL}${encodeURIComponent('https://www.dhakatribune.com/feed/bangladesh')}`,
+            url: `${API_BASE_URL}/categories/bangladesh`,
             containerId: 'bd-grid',
             loaderId: 'bd-loader',
-            sourceName: 'Dhaka Tribune'
+            sourceName: 'BBC Bangla - Bangladesh'
         },
         {
             id: 'world',
-            url: `${RSS2JSON_URL}${encodeURIComponent('https://www.aljazeera.com/xml/rss/all.xml')}`,
+            url: `${API_BASE_URL}/categories/world`,
             containerId: 'international-grid',
             loaderId: 'international-loader',
-            sourceName: 'Al Jazeera'
+            sourceName: 'BBC Bangla - World'
         },
         {
             id: 'top',
-            url: `${RSS2JSON_URL}${encodeURIComponent('http://feeds.bbci.co.uk/news/rss.xml')}`,
+            url: `${API_BASE_URL}/categories/main`,
             containerId: 'top-grid',
             loaderId: 'top-loader',
-            sourceName: 'BBC News'
+            sourceName: 'BBC Bangla - Breaking'
         },
         {
             id: 'sports',
-            url: `${RSS2JSON_URL}${encodeURIComponent('https://www.skysports.com/rss/12040')}`,
+            url: `${API_BASE_URL}/categories/sports`,
             containerId: 'sports-grid',
             loaderId: 'sports-loader',
-            sourceName: 'Sky Sports'
+            sourceName: 'BBC Bangla - Sports'
         }
     ];
 
-    // Format Date
-    const formatDate = (dateString) => {
-        const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-        return new Date(dateString).toLocaleDateString(undefined, options);
+    // Helper to get highest resolution image
+    const getImageUrl = (article) => {
+        if (!article.image || !article.image.srcset || article.image.srcset.length === 0) return DEFAULT_IMAGE;
+        // The last item in srcset usually has the highest resolution (e.g. 800w)
+        return article.image.srcset[article.image.srcset.length - 1].url;
+    };
+
+    // Helper to shuffle an array randomly so news appears fresh on every load
+    const shuffleArray = (array) => {
+        let currentIndex = array.length, randomIndex;
+        while (currentIndex !== 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        }
+        return array;
     };
 
     // Render Articles for a specific section
-    const renderSection = (items, containerId, loaderId, defaultSourceName) => {
+    const renderSection = (articles, containerId, loaderId, defaultSourceName) => {
         const container = document.getElementById(containerId);
         const loader = document.getElementById(loaderId);
-        
+
         // Hide loader
         if (loader) loader.classList.add('hidden');
-        
+
         // Filter valid articles
-        const validArticles = items.filter(item => item.title && item.link).slice(0, 10);
+        let validArticles = articles.filter(item => item.title && item.link);
         
+        // Shuffle and take top 10 to ensure fresh news every time
+        validArticles = shuffleArray(validArticles).slice(0, 10);
+
         if (validArticles.length === 0) {
             container.innerHTML = '<p style="color: var(--text-secondary)">No articles found for this section.</p>';
         } else {
             let html = '';
             validArticles.forEach(article => {
-                // Determine image
-                let imageUrl = article.thumbnail || article.enclosure?.link || DEFAULT_IMAGE;
-                
-                // Extract image from description if no thumbnail is available
-                if (imageUrl === DEFAULT_IMAGE && article.description) {
-                    const imgMatch = article.description.match(/<img[^>]+src="([^">]+)"/);
-                    if (imgMatch && imgMatch[1]) {
-                        imageUrl = imgMatch[1];
-                    }
-                }
-                
-                // Clean HTML from description
+                const imageUrl = getImageUrl(article);
+
+                // Description handling
                 let description = article.description || '';
-                description = description.replace(/<[^>]*>?/gm, ''); // remove HTML tags
                 if (description.length > 150) description = description.substring(0, 150) + '...';
 
                 const sourceName = defaultSourceName;
-                const pubDate = formatDate(article.pubDate);
+                const pubDate = article.time || article.timestamp || 'Recent';
 
                 html += `
                     <a href="${article.link}" target="_blank" rel="noopener noreferrer" class="news-card">
                         <div class="card-img-wrapper">
-                            <img src="${imageUrl}" alt="" class="card-img" onerror="this.src='${DEFAULT_IMAGE}'">
+                            <img src="${imageUrl}" alt="${article.image?.alt || ''}" class="card-img" onerror="this.src='${DEFAULT_IMAGE}'">
                         </div>
                         <div class="card-content">
                             <div class="card-meta">
@@ -102,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             container.innerHTML = html;
         }
-        
+
         container.classList.remove('hidden');
     };
 
@@ -112,9 +116,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(section.url);
             if (!response.ok) throw new Error('API Error');
             const data = await response.json();
-            
-            if (data.status === 'ok' && data.items) {
-                renderSection(data.items, section.containerId, section.loaderId, section.sourceName);
+
+            if (data.success && data.articles) {
+                renderSection(data.articles, section.containerId, section.loaderId, section.sourceName);
             } else {
                 throw new Error('Invalid Data');
             }
@@ -132,14 +136,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const fetchAllSections = async () => {
         for (const section of sections) {
             await fetchSectionData(section);
-            // Wait 1000ms between requests to avoid rate limits on rss2json
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Wait 500ms between requests to avoid overloading local API
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
     };
 
     // Initialize
     fetchAllSections();
 
-    // Auto-update news every 30 minutes (1,800,000 ms)
-    setInterval(fetchAllSections, 30 * 60 * 1000);
+    // Auto-update news every 3 minutes (180,000 ms) to keep it fresh
+    setInterval(fetchAllSections, 3 * 60 * 1000);
 });
