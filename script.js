@@ -1,149 +1,334 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Using the newly cloned BBC News API running locally
-    const API_BASE_URL = 'http://localhost:3000/api';
-    const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
-
-    // Sections Configuration (BBC Bengali API)
-    const sections = [
-        {
-            id: 'politics',
-            url: `${API_BASE_URL}/categories/politics`,
-            containerId: 'politics-grid',
-            loaderId: 'politics-loader',
-            sourceName: 'BBC Bangla - Politics'
-        },
-        {
-            id: 'bd',
-            url: `${API_BASE_URL}/categories/bangladesh`,
-            containerId: 'bd-grid',
-            loaderId: 'bd-loader',
-            sourceName: 'BBC Bangla - Bangladesh'
-        },
-        {
-            id: 'world',
-            url: `${API_BASE_URL}/categories/world`,
-            containerId: 'international-grid',
-            loaderId: 'international-loader',
-            sourceName: 'BBC Bangla - World'
-        },
-        {
-            id: 'top',
-            url: `${API_BASE_URL}/categories/main`,
-            containerId: 'top-grid',
-            loaderId: 'top-loader',
-            sourceName: 'BBC Bangla - Breaking'
-        },
-        {
-            id: 'sports',
-            url: `${API_BASE_URL}/categories/sports`,
-            containerId: 'sports-grid',
-            loaderId: 'sports-loader',
-            sourceName: 'BBC Bangla - Sports'
+    // ============================================================
+    //  🚀 SPLASH SCREEN REMOVAL
+    // ============================================================
+    const hideSplash = () => {
+        const splash = document.getElementById('splash');
+        if (splash) {
+            splash.style.opacity = '0';
+            splash.style.pointerEvents = 'none';
+            setTimeout(() => splash.remove(), 600);
         }
-    ];
+    };
+    // Force hide after max 4s in case of slow network
+    setTimeout(hideSplash, 4000);
 
-    // Helper to get highest resolution image
-    const getImageUrl = (article) => {
-        if (!article.image || !article.image.srcset || article.image.srcset.length === 0) return DEFAULT_IMAGE;
-        // The last item in srcset usually has the highest resolution (e.g. 800w)
-        return article.image.srcset[article.image.srcset.length - 1].url;
+    const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+    
+    // You can add an API key here if rss2json limits you
+    const RSS2JSON_KEY = ''; 
+    const buildRss2jsonUrl = (rssUrl) => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}${RSS2JSON_KEY ? '&api_key=' + RSS2JSON_KEY : ''}`;
+
+    // --- MASSIVE CATEGORIZED BANGLA FEEDS ---
+    const FEEDS = {
+        top: [
+            { url: 'https://www.prothomalo.com/feed/', source: 'প্রথম আলো' },
+            { url: 'https://www.jugantor.com/feed', source: 'যুগান্তর' },
+            { url: 'https://www.kalerkantho.com/rss.xml', source: 'কালের কণ্ঠ' },
+            { url: 'https://www.ittefaq.com.bd/feed', source: 'ইত্তেফাক' },
+            { url: 'https://samakal.com/feed', source: 'সমকাল' }
+        ],
+        politics: [
+            { url: 'https://www.jagonews24.com/rss/politics', source: 'জাগো নিউজ' },
+            { url: 'https://www.banglanews24.com/rss/category/Politics', source: 'বাংলানিউজ২৪' },
+            { url: 'https://www.dhakapost.com/rss/politics', source: 'ঢাকা পোস্ট' }
+        ],
+        bd: [
+            { url: 'https://bdnews24.com/rss/bangladesh', source: 'বিডিনিউজ২৪' },
+            { url: 'https://www.somoynews.tv/rss', source: 'সময় টিভি' },
+            { url: 'https://www.jagonews24.com/rss/national', source: 'জাগো নিউজ' },
+            { url: 'https://www.bd-pratidin.com/rss.xml', source: 'বাংলাদেশ প্রতিদিন' },
+            { url: 'https://www.ntvbd.com/rss', source: 'এনটিভি' },
+            { url: 'https://barta24.com/rss', source: 'বার্তা২৪' }
+        ],
+        world: [
+            { url: 'https://feeds.bbci.co.uk/bengali/rss.xml', source: 'বিবিসি বাংলা' },
+            { url: 'https://www.dhakapost.com/rss/international', source: 'ঢাকা পোস্ট' },
+            { url: 'https://www.jagonews24.com/rss/international', source: 'জাগো নিউজ' },
+            { url: 'https://www.banglanews24.com/rss/category/International', source: 'বাংলানিউজ২৪' }
+        ],
+        sports: [
+            { url: 'https://www.jagonews24.com/rss/sports', source: 'জাগো নিউজ' },
+            { url: 'https://www.dhakapost.com/rss/sports', source: 'ঢাকা পোস্ট' },
+            { url: 'https://www.banglanews24.com/rss/category/Sports', source: 'বাংলানিউজ২৪' }
+        ]
     };
 
-    // Helper to shuffle an array randomly so news appears fresh on every load
+    const sections = [
+        { id: 'top', containerId: 'top-grid', loaderId: 'top-loader' },
+        { id: 'politics', containerId: 'politics-grid', loaderId: 'politics-loader' },
+        { id: 'bd', containerId: 'bd-grid', loaderId: 'bd-loader' },
+        { id: 'world', containerId: 'international-grid', loaderId: 'international-loader' },
+        { id: 'sports', containerId: 'sports-grid', loaderId: 'sports-loader' }
+    ];
+
+    let seenLinks = new Set();
+    let savedArticles = JSON.parse(localStorage.getItem('thebulletin_saved')) || [];
+
+    const getImg = (a) => a.image?.srcset?.length ? a.image.srcset[0].url : (a.image?.url || a.enclosure?.link || a.thumbnail || DEFAULT_IMAGE);
+
+    // ============================================================
+    //  🚀 NOTIFICATION TOAST SYSTEM
+    // ============================================================
+    const showToast = (message) => {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `<span>${message}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    };
+
+    // ============================================================
+    //  🚀 BOOKMARK / SAVE NEWS SYSTEM
+    // ============================================================
+    const updateBookmarkBadge = () => {
+        const badge = document.getElementById('bookmark-badge');
+        if (badge) {
+            badge.textContent = savedArticles.length;
+            badge.classList.toggle('hidden', savedArticles.length === 0);
+        }
+    };
+
+    const toggleSaveArticle = (articleStr, btn) => {
+        const article = JSON.parse(decodeURIComponent(articleStr));
+        const index = savedArticles.findIndex(a => a.link === article.link);
+        
+        if (index > -1) {
+            savedArticles.splice(index, 1);
+            btn.classList.remove('bookmarked');
+            showToast('খবরটি রিমুভ করা হয়েছে');
+        } else {
+            savedArticles.push(article);
+            btn.classList.add('bookmarked');
+            showToast('খবরটি সেভ করা হয়েছে');
+        }
+        
+        localStorage.setItem('thebulletin_saved', JSON.stringify(savedArticles));
+        updateBookmarkBadge();
+        renderBookmarks();
+    };
+
+    window.handleSaveClick = (event, articleStr) => {
+        event.preventDefault(); // Stop link navigation
+        event.stopPropagation();
+        toggleSaveArticle(articleStr, event.currentTarget);
+    };
+
+    const renderBookmarks = () => {
+        const list = document.getElementById('bookmarks-list');
+        if (!list) return;
+        
+        if (savedArticles.length === 0) {
+            list.innerHTML = '<div class="bookmarks-empty"><p>কোনো সেভ করা খবর নেই।</p></div>';
+            return;
+        }
+
+        list.innerHTML = savedArticles.map(a => `
+            <a href="${a.link}" target="_blank" class="bookmark-item">
+                <img src="${a.image}" onerror="this.src='${DEFAULT_IMAGE}'">
+                <div class="bookmark-item-content">
+                    <div class="bookmark-item-title">${a.title}</div>
+                    <div class="bookmark-item-source">${a.source}</div>
+                </div>
+                <button class="bookmark-remove" onclick="event.preventDefault(); window.handleSaveClick(event, '${encodeURIComponent(JSON.stringify(a))}');">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6M14 11v6"/></svg>
+                </button>
+            </a>
+        `).join('');
+    };
+
+    // UI Event for Bookmarks Panel
+    const bookmarksOverlay = document.getElementById('bookmarks-overlay');
+    const bookmarksPanel = document.getElementById('bookmarks-panel');
+    
+    document.getElementById('bookmarks-btn')?.addEventListener('click', () => {
+        bookmarksOverlay?.classList.add('active');
+        bookmarksPanel?.classList.add('active');
+        renderBookmarks();
+    });
+    
+    document.getElementById('close-bookmarks')?.addEventListener('click', () => {
+        bookmarksOverlay?.classList.remove('active');
+        bookmarksPanel?.classList.remove('active');
+    });
+    
+    bookmarksOverlay?.addEventListener('click', () => {
+        bookmarksOverlay?.classList.remove('active');
+        bookmarksPanel?.classList.remove('active');
+    });
+
+    updateBookmarkBadge();
+
+
+    // ============================================================
+    //  🚀 BUILD SWIPEABLE CARD
+    // ============================================================
+    const buildSwipeCard = (a, src) => {
+        const isSaved = savedArticles.some(saved => saved.link === a.link);
+        const articleData = { title: a.title, link: a.link, image: getImg(a), source: src };
+        const articleStr = encodeURIComponent(JSON.stringify(articleData));
+        const pubDate = new Date(a.pubDate).toLocaleTimeString('bn-BD', { hour: '2-digit', minute:'2-digit' });
+
+        return `
+        <a href="${a.link}" target="_blank" class="swipe-card">
+            <div class="card-img-wrapper">
+                <img src="${articleData.image}" alt="" onerror="this.src='${DEFAULT_IMAGE}'">
+                <button class="bookmark-btn ${isSaved ? 'bookmarked' : ''}" onclick="window.handleSaveClick(event, '${articleStr}')" title="Save" style="position:absolute; top:10px; right:10px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg>
+                </button>
+            </div>
+            <div class="card-content">
+                <h3 class="card-title">${a.title}</h3>
+                <div class="card-meta">
+                    <span>${src}</span> 
+                    <span>&bull;</span> 
+                    <span class="time-ago">${pubDate}</span>
+                    <div style="flex:1"></div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#8e8e93"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+                </div>
+            </div>
+        </a>`;
+    };
+
     const shuffleArray = (array) => {
-        let currentIndex = array.length, randomIndex;
-        while (currentIndex !== 0) {
-            randomIndex = Math.floor(Math.random() * currentIndex);
-            currentIndex--;
-            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        let curId = array.length;
+        while (0 !== curId) {
+            let randId = Math.floor(Math.random() * curId);
+            curId -= 1;
+            let tmp = array[curId];
+            array[curId] = array[randId];
+            array[randId] = tmp;
         }
         return array;
     };
 
-    // Render Articles for a specific section
-    const renderSection = (articles, containerId, loaderId, defaultSourceName) => {
+    // ============================================================
+    //  🚀 FETCH LOGIC
+    // ============================================================
+    const fetchSectionFeeds = async (sectionId, containerId, loaderId, isRefresh = false) => {
         const container = document.getElementById(containerId);
         const loader = document.getElementById(loaderId);
-
-        // Hide loader
-        if (loader) loader.classList.add('hidden');
-
-        // Filter valid articles
-        let validArticles = articles.filter(item => item.title && item.link);
         
-        // Shuffle and take top 10 to ensure fresh news every time
-        validArticles = shuffleArray(validArticles).slice(0, 10);
-
-        if (validArticles.length === 0) {
-            container.innerHTML = '<p style="color: var(--text-secondary)">No articles found for this section.</p>';
-        } else {
-            let html = '';
-            validArticles.forEach(article => {
-                const imageUrl = getImageUrl(article);
-
-                // Description handling
-                let description = article.description || '';
-                if (description.length > 150) description = description.substring(0, 150) + '...';
-
-                const sourceName = defaultSourceName;
-                const pubDate = article.time || article.timestamp || 'Recent';
-
-                html += `
-                    <a href="${article.link}" target="_blank" rel="noopener noreferrer" class="news-card">
-                        <div class="card-img-wrapper">
-                            <img src="${imageUrl}" alt="${article.image?.alt || ''}" class="card-img" onerror="this.src='${DEFAULT_IMAGE}'">
-                        </div>
-                        <div class="card-content">
-                            <div class="card-meta">
-                                <span class="source">${sourceName}</span>
-                                <span>${pubDate}</span>
-                            </div>
-                            <h3 class="card-title">${article.title}</h3>
-                            <p class="card-desc">${description}</p>
-                        </div>
-                    </a>
-                `;
-            });
-            container.innerHTML = html;
+        if (isRefresh) {
+            if(container) { container.innerHTML = ''; container.classList.add('hidden'); }
+            if(loader) loader.classList.remove('hidden');
         }
 
-        container.classList.remove('hidden');
-    };
+        const sectionFeeds = shuffleArray([...(FEEDS[sectionId] || [])]);
+        let items = [];
+        let fetchedCount = 0;
+        
+        // Fetch up to 15 items per section (total 75+ items across 5 sections)
+        for (const feed of sectionFeeds) {
+            if (fetchedCount >= 15) break; 
+            try {
+                const res = await fetch(buildRss2jsonUrl(feed.url));
+                const data = await res.json();
+                if (data.status === 'ok' && data.items && data.items.length > 0) {
+                    const newItems = data.items.filter(a => !seenLinks.has(a.link));
+                    newItems.forEach(a => {
+                        a._sourceName = feed.source;
+                        seenLinks.add(a.link);
+                    });
+                    items = items.concat(newItems);
+                    fetchedCount += newItems.length;
+                }
+            } catch (e) { console.error("Error fetching", feed.url); }
+        }
 
-    // Fetch Data for a single section
-    const fetchSectionData = async (section) => {
-        try {
-            const response = await fetch(section.url);
-            if (!response.ok) throw new Error('API Error');
-            const data = await response.json();
-
-            if (data.success && data.articles) {
-                renderSection(data.articles, section.containerId, section.loaderId, section.sourceName);
-            } else {
-                throw new Error('Invalid Data');
-            }
-        } catch (error) {
-            console.error(`Error fetching ${section.id}:`, error);
-            const container = document.getElementById(section.containerId);
-            const loader = document.getElementById(section.loaderId);
+        if (items.length > 0) {
+            items = shuffleArray(items);
             if (loader) loader.classList.add('hidden');
-            container.innerHTML = `<p style="color: #ef4444; padding: 20px; background: rgba(239, 68, 68, 0.1); border-radius: 8px;">Failed to load news. Please try again later.</p>`;
-            container.classList.remove('hidden');
+            if (container) {
+                let html = items.map(a => buildSwipeCard(a, a._sourceName)).join('');
+                if (isRefresh) {
+                    container.innerHTML = html;
+                } else {
+                    // Prepend for background auto-updates
+                    container.insertAdjacentHTML('afterbegin', html);
+                }
+                container.classList.remove('hidden');
+            }
+            return items.length;
+        } else {
+            if (loader && !isRefresh) loader.classList.add('hidden');
+            return 0;
         }
     };
 
-    // Fetch all sections
-    const fetchAllSections = async () => {
-        for (const section of sections) {
-            await fetchSectionData(section);
-            // Wait 500ms between requests to avoid overloading local API
-            await new Promise(resolve => setTimeout(resolve, 500));
-        }
+    const fetchAllData = async (isRefresh = false) => {
+        if (isRefresh) seenLinks = new Set(); // Reset seen links on manual refresh
+        
+        let totalFetched = 0;
+        const promises = sections.map(s => fetchSectionFeeds(s.id, s.containerId, s.loaderId, isRefresh));
+        const results = await Promise.all(promises);
+        
+        totalFetched = results.reduce((acc, val) => acc + val, 0);
+        
+        if (!isRefresh) hideSplash(); // Hide splash on initial load
+        return totalFetched;
     };
 
-    // Initialize
-    fetchAllSections();
+    // Initial Load
+    fetchAllData();
 
-    // Auto-update news every 3 minutes (180,000 ms) to keep it fresh
-    setInterval(fetchAllSections, 3 * 60 * 1000);
+    // ============================================================
+    //  🚀 REFRESH BUTTON (Wipe and load 50+ new)
+    // ============================================================
+    const handleRefresh = async (btn) => {
+        if (!btn || btn.disabled) return;
+        btn.disabled = true;
+        document.querySelector('.spin-icon')?.classList.add('spin-animation');
+        
+        const count = await fetchAllData(true);
+        if (count > 0) showToast(`${count} টি নতুন খবর আপডেট হয়েছে!`);
+        
+        btn.disabled = false;
+        document.querySelector('.spin-icon')?.classList.remove('spin-animation');
+    };
+
+    document.getElementById('refresh-btn-main')?.addEventListener('click', function() { handleRefresh(this); });
+
+    // ============================================================
+    //  🚀 AUTO-UPDATE (Every 2 Minutes)
+    // ============================================================
+    setInterval(async () => {
+        console.log("Auto-updating feeds in background...");
+        // Auto update fetches new items without wiping existing ones
+        const count = await fetchAllData(false);
+        if (count > 0) {
+            showToast(`🔥 ${count} টি নতুন খবর যুক্ত হয়েছে!`);
+        }
+    }, 120000); // 2 minutes
+
+    // ============================================================
+    //  🚀 UI CONTROLS (Menu, Search)
+    // ============================================================
+    const threeDotBtn = document.getElementById('three-dot-btn');
+    const threeDotMenu = document.getElementById('three-dot-menu');
+    const menuOverlay = document.getElementById('menu-overlay');
+
+    const toggleMenu = (show) => {
+        threeDotMenu?.classList.toggle('active', show);
+        menuOverlay?.classList.toggle('active', show);
+    };
+
+    threeDotBtn?.addEventListener('click', () => toggleMenu(true));
+    menuOverlay?.addEventListener('click', () => toggleMenu(false));
+
+    // Search
+    const searchInput = document.getElementById('search-input');
+    searchInput?.addEventListener('input', () => {
+        const q = searchInput.value.toLowerCase();
+        document.querySelectorAll('.swipe-card').forEach(card => {
+            const match = card.querySelector('.card-title').textContent.toLowerCase().includes(q);
+            card.style.display = match ? '' : 'none';
+        });
+    });
+
 });
