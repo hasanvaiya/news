@@ -124,28 +124,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!list) return;
         
         if (savedArticles.length === 0) {
-            list.innerHTML = '<div class="bookmarks-empty"><p>কোনো সেভ করা খবর নেই।</p></div>';
+            list.innerHTML = '<div class="bookmarks-empty" style="text-align:center; padding: 40px 20px; color: #a1a1aa;"><p>কোনো সেভ করা খবর নেই।</p></div>';
             return;
         }
 
         list.innerHTML = savedArticles.map(a => `
-            <a href="${a.link}" target="_blank" class="bookmark-item">
-                <img src="${a.image}" onerror="this.src='${DEFAULT_IMAGE}'">
-                <div class="bookmark-item-content">
-                    <div class="bookmark-item-title">${a.title}</div>
-                    <div class="bookmark-item-source">${a.source}</div>
+            <a href="${a.link}" target="_blank" class="swipe-card">
+                <div class="card-img-wrapper">
+                    <img src="${a.image}" onerror="this.src='${DEFAULT_IMAGE}'">
                 </div>
-                <button class="bookmark-remove" onclick="event.preventDefault(); window.handleSaveClick(event, '${encodeURIComponent(JSON.stringify(a))}');">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6M14 11v6"/></svg>
+                <div class="card-content">
+                    <h3 class="card-title">${a.title}</h3>
+                    <div class="card-meta">
+                        <span>${a.source}</span>
+                    </div>
+                </div>
+                <button class="bookmark-btn bookmarked" onclick="window.handleSaveClick(event, '${encodeURIComponent(JSON.stringify(a))}');">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6M14 11v6"/></svg>
                 </button>
             </a>
         `).join('');
     };
-
-    // UI Event for Bookmarks Panel
-    document.getElementById('nav-bookmark')?.addEventListener('click', () => {
-        renderBookmarks();
-    });
 
     updateBookmarkBadge();
 
@@ -157,13 +156,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const isSaved = savedArticles.some(saved => saved.link === a.link);
         const articleData = { title: a.title, link: a.link, image: getImg(a), source: src };
         const articleStr = encodeURIComponent(JSON.stringify(articleData));
-        const pubDate = new Date(a.pubDate).toLocaleTimeString('bn-BD', { hour: '2-digit', minute:'2-digit' });
+        
+        let pubDateStr = '';
+        if (a.pubDate) {
+            const dateObj = new Date(a.pubDate);
+            if (!isNaN(dateObj.getTime())) {
+                pubDateStr = dateObj.toLocaleTimeString('bn-BD', { hour: '2-digit', minute:'2-digit' });
+            }
+        }
 
         return `
         <a href="${a.link}" target="_blank" class="swipe-card">
             <div class="card-img-wrapper">
                 <img src="${articleData.image}" alt="" onerror="this.src='${DEFAULT_IMAGE}'">
-                <button class="bookmark-btn ${isSaved ? 'bookmarked' : ''}" onclick="window.handleSaveClick(event, '${articleStr}')" title="Save" style="position:absolute; top:10px; right:10px;">
+                <button class="bookmark-btn ${isSaved ? 'bookmarked' : ''}" onclick="window.handleSaveClick(event, '${articleStr}')" title="Save">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg>
                 </button>
             </div>
@@ -171,8 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h3 class="card-title">${a.title}</h3>
                 <div class="card-meta">
                     <span>${src}</span> 
-                    <span>&bull;</span> 
-                    <span class="time-ago">${pubDate}</span>
+                    ${pubDateStr ? `<span>&bull;</span> <span class="time-ago">${pubDateStr}</span>` : ''}
                     <div style="flex:1"></div>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#8e8e93"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
                 </div>
@@ -292,28 +297,54 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 120000); // 2 minutes
 
     // ============================================================
-    //  🚀 UI CONTROLS (Menu, Search)
+    //  🚀 NAVIGATION & SCROLL
     // ============================================================
-    const threeDotBtn = document.getElementById('three-dot-btn');
-    const threeDotMenu = document.getElementById('three-dot-menu');
-    const menuOverlay = document.getElementById('menu-overlay');
-
-    const toggleMenu = (show) => {
-        threeDotMenu?.classList.toggle('active', show);
-        menuOverlay?.classList.toggle('active', show);
+    window.scrollToSection = (id) => {
+        const el = document.getElementById(id);
+        if (el) {
+            const headerOffset = 130;
+            const elementPosition = el.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+            
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: "smooth"
+            });
+        }
     };
 
-    threeDotBtn?.addEventListener('click', () => toggleMenu(true));
-    menuOverlay?.addEventListener('click', () => toggleMenu(false));
-
-    // Search
-    const searchInput = document.getElementById('search-input');
-    searchInput?.addEventListener('input', () => {
-        const q = searchInput.value.toLowerCase();
-        document.querySelectorAll('.swipe-card').forEach(card => {
-            const match = card.querySelector('.card-title').textContent.toLowerCase().includes(q);
-            card.style.display = match ? '' : 'none';
+    window.addEventListener('scroll', () => {
+        let current = '';
+        const sections = document.querySelectorAll('.feed-section');
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (window.pageYOffset >= sectionTop - 150) {
+                current = section.getAttribute('id');
+            }
         });
+        
+        if (current) {
+            document.querySelectorAll('.cat-chip').forEach(chip => {
+                chip.classList.remove('active');
+                if (chip.getAttribute('onclick').includes(current)) {
+                    chip.classList.add('active');
+                    chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+            });
+        }
+    });
+
+    // View Toggles
+    document.getElementById('back-to-home')?.addEventListener('click', () => {
+        document.getElementById('bookmarks-view').classList.add('hidden');
+        document.getElementById('home-view').classList.remove('hidden');
+    });
+
+    document.getElementById('nav-bookmark')?.addEventListener('click', () => {
+        document.getElementById('home-view').classList.add('hidden');
+        document.getElementById('bookmarks-view').classList.remove('hidden');
+        window.scrollTo(0,0);
+        renderBookmarks();
     });
 
 });
