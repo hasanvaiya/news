@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body class="dark-theme">
     <!-- Ambient Glowing Backgrounds -->
@@ -164,14 +164,16 @@
                 }
             });
             
-            document.querySelectorAll('.cat-chip').forEach(chip => {
-                chip.classList.remove('active');
-                if (chip.getAttribute('onclick').includes(current)) {
-                    chip.classList.add('active');
-                    // Ensure active chip is visible in horizontal scroll
-                    chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                }
-            });
+            if (current) {
+                document.querySelectorAll('.cat-chip').forEach(chip => {
+                    chip.classList.remove('active');
+                    if (chip.getAttribute('onclick').includes(current)) {
+                        chip.classList.add('active');
+                        // Ensure active chip is visible in horizontal scroll
+                        chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }
+                });
+            }
         });
 
         // View Toggles
