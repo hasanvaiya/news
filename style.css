@@ -1,178 +1,192 @@
-:root {
-    --bg-color: #050505;
-    --card-bg: rgba(25, 25, 30, 0.6);
-    --card-border: rgba(255, 255, 255, 0.08);
-    --text-main: #ffffff;
-    --text-meta: #a1a1aa;
-    --accent: #3b82f6;
-    --accent-glow: rgba(59, 130, 246, 0.5);
-    --font-main: 'Outfit', 'Hind Siliguri', sans-serif;
-}
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#050505">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>The Bulletin - Premium Dark News</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=5">
+</head>
+<body class="dark-theme">
+    <!-- Ambient Glowing Backgrounds -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
 
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    <!-- Splash Screen -->
+    <div id="splash" class="splash">
+        <div class="splash-inner">
+            <div class="splash-logo">The<span>Bulletin</span></div>
+            <div class="splash-loader"><div class="splash-bar"></div></div>
+        </div>
+    </div>
 
-body {
-    font-family: var(--font-main);
-    background-color: var(--bg-color);
-    color: var(--text-main);
-    -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
-}
+    <!-- App Header & Category Chips -->
+    <header class="app-header glass-panel">
+        <div class="header-top">
+            <h1 class="logo">The<span>Bulletin</span></h1>
+            <div class="header-actions">
+                <button id="refresh-btn-main" class="icon-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="spin-icon"><path d="M21 2v6h-6M3 12a9 9 0 1 0 2.6-6.4L2 9"/></svg>
+                </button>
+                <button id="nav-bookmark" class="icon-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg>
+                    <span id="bookmark-badge" class="badge hidden">0</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Premium Animated Category Selector -->
+        <div class="category-slider">
+            <button class="cat-chip active" onclick="scrollToSection('top-stories')">⚡ Top Stories</button>
+            <button class="cat-chip" onclick="scrollToSection('politics-news')">🏛️ Politics</button>
+            <button class="cat-chip" onclick="scrollToSection('bd-news')">🇧🇩 Bangladesh</button>
+            <button class="cat-chip" onclick="scrollToSection('international-news')">🌍 World</button>
+            <button class="cat-chip" onclick="scrollToSection('sports-news')">⚽ Sports</button>
+        </div>
+    </header>
 
-a { text-decoration: none; color: inherit; }
-button { border: none; background: none; cursor: pointer; font-family: inherit; outline: none; }
+    <!-- Main Feed -->
+    <main class="app-main" id="home-view">
+        <div class="feed-container">
+            
+            <!-- Top Stories -->
+            <section id="top-stories" class="feed-section">
+                <div class="section-title">
+                    <div class="title-indicator"></div>
+                    <h2>Top Stories</h2>
+                </div>
+                <div id="top-loader" class="skeleton-loader">
+                    <div class="sk-hero"></div><div class="sk-row"><div class="sk-box"></div><div class="sk-box"></div></div>
+                </div>
+                <div id="top-grid" class="magazine-grid"></div>
+            </section>
 
-.hidden { display: none !important; }
+            <!-- Politics -->
+            <section id="politics-news" class="feed-section">
+                <div class="section-title">
+                    <div class="title-indicator"></div>
+                    <h2>Politics</h2>
+                </div>
+                <div id="politics-loader" class="skeleton-loader">
+                    <div class="sk-hero"></div><div class="sk-row"><div class="sk-box"></div><div class="sk-box"></div></div>
+                </div>
+                <div id="politics-grid" class="magazine-grid"></div>
+            </section>
 
-/* ── AMBIENT GLOWS (Premium Dark Mood) ── */
-.ambient-glow {
-    position: fixed; border-radius: 50%; filter: blur(120px); z-index: -1; opacity: 0.35; pointer-events: none;
-}
-.glow-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(59,130,246,0.6) 0%, rgba(0,0,0,0) 70%); }
-.glow-2 { bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: radial-gradient(circle, rgba(139,92,246,0.4) 0%, rgba(0,0,0,0) 70%); }
+            <!-- Bangladesh -->
+            <section id="bd-news" class="feed-section">
+                <div class="section-title">
+                    <div class="title-indicator"></div>
+                    <h2>Bangladesh</h2>
+                </div>
+                <div id="bd-loader" class="skeleton-loader">
+                    <div class="sk-hero"></div><div class="sk-row"><div class="sk-box"></div><div class="sk-box"></div></div>
+                </div>
+                <div id="bd-grid" class="magazine-grid"></div>
+            </section>
 
-/* ── SPLASH SCREEN ── */
-.splash {
-    position: fixed; inset: 0; background: #050505; display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.5s ease;
-}
-.splash-logo { font-size: 2.5rem; font-weight: 800; color: #fff; margin-bottom: 20px; letter-spacing: -1px; }
-.splash-logo span { background: linear-gradient(to right, #3b82f6, #8b5cf6); -webkit-background-clip: text; color: transparent; }
-.splash-loader { width: 160px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin: 0 auto; }
-.splash-bar { height: 100%; width: 0; background: linear-gradient(90deg, #3b82f6, #8b5cf6); animation: splashLoad 1.4s ease forwards; }
-@keyframes splashLoad { to { width: 100%; } }
+            <!-- International -->
+            <section id="international-news" class="feed-section">
+                <div class="section-title">
+                    <div class="title-indicator"></div>
+                    <h2>International</h2>
+                </div>
+                <div id="international-loader" class="skeleton-loader">
+                    <div class="sk-hero"></div><div class="sk-row"><div class="sk-box"></div><div class="sk-box"></div></div>
+                </div>
+                <div id="international-grid" class="magazine-grid"></div>
+            </section>
 
-/* ── GLASS HEADER & CHIPS ── */
-.app-header {
-    position: sticky; top: 0; z-index: 100;
-    background: rgba(5, 5, 5, 0.75);
-    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--card-border);
-    padding: 12px 0 0 0;
-}
-.header-top {
-    display: flex; align-items: center; justify-content: space-between; padding: 0 20px 12px;
-}
-.logo { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
-.logo span { background: linear-gradient(to right, #3b82f6, #8b5cf6); -webkit-background-clip: text; color: transparent; }
-.header-actions { display: flex; gap: 12px; }
-.icon-btn {
-    color: #fff; width: 38px; height: 38px; border-radius: 50%;
-    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-    display: flex; align-items: center; justify-content: center; position: relative;
-    transition: all 0.2s;
-}
-.icon-btn:hover { background: rgba(255,255,255,0.15); transform: scale(1.05); }
-.spin-icon.spin-animation { animation: spin 1s linear infinite; }
-@keyframes spin { 100% { transform: rotate(360deg); } }
-.badge {
-    position: absolute; top: -2px; right: -2px; background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 700; border-radius: 10px; padding: 2px 6px; border: 2px solid #050505;
-}
+            <!-- Sports -->
+            <section id="sports-news" class="feed-section">
+                <div class="section-title">
+                    <div class="title-indicator"></div>
+                    <h2>Sports</h2>
+                </div>
+                <div id="sports-loader" class="skeleton-loader">
+                    <div class="sk-hero"></div><div class="sk-row"><div class="sk-box"></div><div class="sk-box"></div></div>
+                </div>
+                <div id="sports-grid" class="magazine-grid"></div>
+            </section>
 
-/* Category Slider */
-.category-slider {
-    display: flex; gap: 10px; overflow-x: auto; padding: 0 20px 12px;
-    scrollbar-width: none;
-}
-.category-slider::-webkit-scrollbar { display: none; }
-.cat-chip {
-    padding: 8px 18px; border-radius: 30px; font-size: 0.85rem; font-weight: 600; white-space: nowrap;
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #a1a1aa;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.cat-chip.active {
-    background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2));
-    border-color: rgba(59,130,246,0.5); color: #fff;
-    box-shadow: 0 4px 15px rgba(59,130,246,0.2);
-    transform: scale(1.05);
-}
+        </div>
+    </main>
 
-/* ── MAIN FEED & SECTIONS ── */
-.app-main { padding-bottom: 40px; }
-.feed-container { padding: 20px; }
-.feed-section { margin-bottom: 40px; scroll-margin-top: 140px; }
-.section-title {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
-}
-.title-indicator { width: 5px; height: 20px; background: linear-gradient(to bottom, #3b82f6, #8b5cf6); border-radius: 4px; }
-.section-title h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
+    <!-- Bookmarks View -->
+    <main class="app-main hidden" id="bookmarks-view">
+        <header class="bookmarks-header glass-panel">
+            <button id="back-to-home" class="icon-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <h1 class="logo" style="font-size:1.5rem">Saved<span>News</span></h1>
+            <div style="width:36px"></div> <!-- Spacer for flex balance -->
+        </header>
+        <div id="bookmarks-list" class="bookmarks-feed" style="margin-top: 20px;">
+            <!-- Saved items -->
+        </div>
+    </main>
 
-/* ── MAGAZINE GRID (Boro, Choto Milano) ── */
-.magazine-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
-}
+    <!-- Notification Toast -->
+    <div id="toast-container" class="toast-container"></div>
 
-/* Base Card Style */
-.swipe-card {
-    background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px;
-    display: flex; flex-direction: column; position: relative; overflow: hidden;
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    transition: transform 0.25s, box-shadow 0.25s;
-}
-.swipe-card:active { transform: scale(0.97); }
-.card-img-wrapper { position: relative; width: 100%; overflow: hidden; }
-.card-img-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
-.swipe-card:hover .card-img-wrapper img { transform: scale(1.05); }
-.card-content { padding: 14px; display: flex; flex-direction: column; justify-content: center; }
-.card-title { font-weight: 700; line-height: 1.35; color: #fff; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
-.card-meta { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-meta); margin-top: 8px; font-weight: 500; }
-.card-meta span:first-child { color: var(--accent); font-weight: 600; }
+    <script src="script.js"></script>
+    <script>
+        // Smooth scroll for category chips
+        function scrollToSection(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                const headerOffset = 130; // Height of sticky header + chips
+                const elementPosition = el.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: "smooth"
+                });
+            }
+        }
 
-/* Item 1: Large Hero (Full Width) */
-.magazine-grid .swipe-card:nth-child(1) { grid-column: span 2; }
-.magazine-grid .swipe-card:nth-child(1) .card-img-wrapper { height: 220px; }
-.magazine-grid .swipe-card:nth-child(1) .card-title { font-size: 1.3rem; -webkit-line-clamp: 3; }
+        // Active state for chips on scroll
+        window.addEventListener('scroll', () => {
+            let current = '';
+            const sections = document.querySelectorAll('.feed-section');
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 150) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            if (current) {
+                document.querySelectorAll('.cat-chip').forEach(chip => {
+                    chip.classList.remove('active');
+                    if (chip.getAttribute('onclick').includes(current)) {
+                        chip.classList.add('active');
+                        // Ensure active chip is visible in horizontal scroll
+                        chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }
+                });
+            }
+        });
 
-/* Item 2 & 3: Small Squares Side-by-Side */
-.magazine-grid .swipe-card:nth-child(2),
-.magazine-grid .swipe-card:nth-child(3) { grid-column: span 1; }
-.magazine-grid .swipe-card:nth-child(2) .card-img-wrapper,
-.magazine-grid .swipe-card:nth-child(3) .card-img-wrapper { height: 110px; }
-.magazine-grid .swipe-card:nth-child(2) .card-content,
-.magazine-grid .swipe-card:nth-child(3) .card-content { padding: 12px; }
-.magazine-grid .swipe-card:nth-child(2) .card-title,
-.magazine-grid .swipe-card:nth-child(3) .card-title { font-size: 0.9rem; -webkit-line-clamp: 3; line-height: 1.4; }
-.magazine-grid .swipe-card:nth-child(2) .card-meta,
-.magazine-grid .swipe-card:nth-child(3) .card-meta { margin-top: 6px; font-size: 0.65rem; }
+        // View Toggles
+        document.getElementById('nav-bookmark').addEventListener('click', () => {
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('bookmarks-view').classList.remove('hidden');
+            window.scrollTo(0,0);
+        });
 
-/* Item 4 Onwards: List Style (Full Width) */
-.magazine-grid .swipe-card:nth-child(n+4) {
-    grid-column: span 2; flex-direction: row; align-items: center;
-    background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.06);
-    border-radius: 0; padding: 14px 0;
-}
-.magazine-grid .swipe-card:nth-child(n+4):last-child { border-bottom: none; }
-.magazine-grid .swipe-card:nth-child(n+4) .card-img-wrapper { width: 100px; height: 80px; border-radius: 12px; margin-right: 14px; flex-shrink: 0; }
-.magazine-grid .swipe-card:nth-child(n+4) .card-content { padding: 0; flex: 1; }
-.magazine-grid .swipe-card:nth-child(n+4) .card-title { font-size: 1rem; -webkit-line-clamp: 2; }
-
-/* ── BOOKMARK BUTTON ── */
-.bookmark-btn {
-    position: absolute; top: 10px; right: 10px; z-index: 10;
-    background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(8px);
-    border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
-    color: rgba(255,255,255,0.8); transition: all 0.25s ease;
-}
-.bookmark-btn:hover { background: rgba(59,130,246,0.5); border-color: var(--accent); color: #fff; transform: scale(1.1); }
-.bookmark-btn.bookmarked { background: var(--accent); border-color: var(--accent); color: #fff; }
-.bookmark-btn svg { width: 14px; height: 14px; fill: none; }
-.bookmark-btn.bookmarked svg { fill: currentColor; }
-.magazine-grid .swipe-card:nth-child(n+4) .bookmark-btn { top: 6px; right: 6px; width: 24px; height: 24px; } /* Smaller btn for lists */
-
-/* ── SAVED NEWS PAGE ── */
-.bookmarks-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; }
-.bookmarks-feed { display: flex; flex-direction: column; padding: 0 20px; }
-.bookmarks-feed .swipe-card { flex-direction: row; align-items: center; padding: 14px 0; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.06); border-radius: 0; }
-.bookmarks-feed .card-img-wrapper { width: 100px; height: 80px; border-radius: 12px; margin-right: 14px; flex-shrink: 0; }
-.bookmarks-feed .card-content { padding: 0; flex: 1; }
-.bookmarks-feed .card-title { font-size: 1rem; -webkit-line-clamp: 2; }
-
-/* Loaders */
-.skeleton-loader { display: flex; flex-direction: column; gap: 14px; margin-bottom: 14px; }
-.sk-hero { width: 100%; height: 220px; background: rgba(255,255,255,0.05); border-radius: 16px; animation: pulse 1.5s infinite; }
-.sk-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.sk-box { height: 110px; background: rgba(255,255,255,0.05); border-radius: 16px; animation: pulse 1.5s infinite; }
-@keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-
-/* Toast */
-.toast-container { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 1000; pointer-events: none; }
-.toast { background: rgba(20,20,25,0.95); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 12px 24px; border-radius: 30px; font-size: 0.9rem; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.5); backdrop-filter: blur(10px); transition: opacity 0.3s; }
+        document.getElementById('back-to-home').addEventListener('click', () => {
+            document.getElementById('bookmarks-view').classList.add('hidden');
+            document.getElementById('home-view').classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
