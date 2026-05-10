@@ -137,56 +137,5 @@
     <div id="toast-container" class="toast-container"></div>
 
     <script src="script.js"></script>
-    <script>
-        // Smooth scroll for category chips
-        function scrollToSection(id) {
-            const el = document.getElementById(id);
-            if (el) {
-                const headerOffset = 130; // Height of sticky header + chips
-                const elementPosition = el.getBoundingClientRect().top;
-                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-                
-                window.scrollTo({
-                    top: offsetPosition,
-                    behavior: "smooth"
-                });
-            }
-        }
-
-        // Active state for chips on scroll
-        window.addEventListener('scroll', () => {
-            let current = '';
-            const sections = document.querySelectorAll('.feed-section');
-            sections.forEach(section => {
-                const sectionTop = section.offsetTop;
-                if (pageYOffset >= sectionTop - 150) {
-                    current = section.getAttribute('id');
-                }
-            });
-            
-            if (current) {
-                document.querySelectorAll('.cat-chip').forEach(chip => {
-                    chip.classList.remove('active');
-                    if (chip.getAttribute('onclick').includes(current)) {
-                        chip.classList.add('active');
-                        // Ensure active chip is visible in horizontal scroll
-                        chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                    }
-                });
-            }
-        });
-
-        // View Toggles
-        document.getElementById('nav-bookmark').addEventListener('click', () => {
-            document.getElementById('home-view').classList.add('hidden');
-            document.getElementById('bookmarks-view').classList.remove('hidden');
-            window.scrollTo(0,0);
-        });
-
-        document.getElementById('back-to-home').addEventListener('click', () => {
-            document.getElementById('bookmarks-view').classList.add('hidden');
-            document.getElementById('home-view').classList.remove('hidden');
-        });
-    </script>
 </body>
 </html>
