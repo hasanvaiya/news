@@ -143,23 +143,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // UI Event for Bookmarks Panel
-    const bookmarksOverlay = document.getElementById('bookmarks-overlay');
-    const bookmarksPanel = document.getElementById('bookmarks-panel');
-    
-    document.getElementById('bookmarks-btn')?.addEventListener('click', () => {
-        bookmarksOverlay?.classList.add('active');
-        bookmarksPanel?.classList.add('active');
+    document.getElementById('nav-bookmark')?.addEventListener('click', () => {
         renderBookmarks();
-    });
-    
-    document.getElementById('close-bookmarks')?.addEventListener('click', () => {
-        bookmarksOverlay?.classList.remove('active');
-        bookmarksPanel?.classList.remove('active');
-    });
-    
-    bookmarksOverlay?.addEventListener('click', () => {
-        bookmarksOverlay?.classList.remove('active');
-        bookmarksPanel?.classList.remove('active');
     });
 
     updateBookmarkBadge();
